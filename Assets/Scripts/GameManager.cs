@@ -7,57 +7,58 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     [Header("UI")]
-    public TMP_Text  scoreText;
-    public TMP_Text  birdsLeftText;
+    public TMP_Text   scoreText;
+    public TMP_Text   birdsLeftText;
     public GameObject winPanel;
     public GameObject losePanel;
 
-    [Header("Game Settings")]
-    public int totalBirds = 5;
+    [Header("Settings")]
+    public int totalBirds   = 5;
+    public int scorePerPig  = 500;
 
     [Header("References")]
-    public Slingshot slingshot;   // drag your Slingshot GO here
+    public Slingshot slingshot;
 
-    // ── Private ───────────────────────────────────
-    private int  _score     = 0;
-    private int  _birdsLeft;
-    private bool _gameOver  = false;
+    public int  BirdsLeft { get; private set; }
+
+    private int  _score    = 0;
+    private bool _gameOver = false;
 
     void Awake()
     {
-        Instance    = this;
-        _birdsLeft  = totalBirds;
+        Instance  = this;
+        BirdsLeft = totalBirds;
         if (winPanel)  winPanel.SetActive(false);
         if (losePanel) losePanel.SetActive(false);
         UpdateUI();
     }
 
-    // ── Called by Slingshot on every launch ───────
+    // ── Called by Slingshot every launch ──────────
     public void BirdLaunched()
     {
         if (_gameOver) return;
 
-        _birdsLeft--;
+        BirdsLeft--;
         UpdateUI();
 
-        if (_birdsLeft <= 0)
+        if (BirdsLeft <= 0)
         {
-            // Disable slingshot immediately — no more birds
             if (slingshot != null) slingshot.Disable();
-
-            // Wait a moment for last bird to finish, then check result
-            Invoke(nameof(CheckEndCondition), 3f);
+            // Wait generously for last bird + any chain damage to settle
+            Invoke(nameof(CheckEndCondition), 5f);
         }
     }
 
-    // ── Called by Pig.cs on pig death ─────────────
+    // ── Called by Pig.Die() — guaranteed single call ──
     public void PigKilled()
     {
         if (_gameOver) return;
 
-        AddScore(500);
+        // Add score immediately — score always updates when pig dies
+        _score += scorePerPig;
+        UpdateUI();
 
-        // Win instantly when last pig dies — even if birds remain
+        // Check win right now
         if (GetPigCount() == 0)
         {
             CancelInvoke(nameof(CheckEndCondition));
@@ -65,19 +66,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ── Called after last bird settles ────────────
     void CheckEndCondition()
     {
         if (_gameOver) return;
-
-        if (GetPigCount() == 0)
-            WinGame();
-        else
-            LoseGame();
+        if (GetPigCount() == 0) WinGame();
+        else                    LoseGame();
     }
 
+    // Kept for structure bonuses etc.
     public void AddScore(int pts)
     {
+        if (_gameOver) return;
         _score += pts;
         UpdateUI();
     }
@@ -85,30 +84,25 @@ public class GameManager : MonoBehaviour
     int GetPigCount() =>
         FindObjectsByType<Pig>(FindObjectsSortMode.None).Length;
 
-    // ── Win ───────────────────────────────────────
     void WinGame()
     {
         if (_gameOver) return;
         _gameOver = true;
-
-        // Bonus score for birds not used
-        AddScore(_birdsLeft * 1000);
-
+        // Bonus for unused birds
+        _score += BirdsLeft * 1000;
+        UpdateUI();
         Time.timeScale = 0f;
         if (winPanel) winPanel.SetActive(true);
     }
 
-    // ── Lose ──────────────────────────────────────
     void LoseGame()
     {
         if (_gameOver) return;
         _gameOver = true;
-
         Time.timeScale = 0f;
         if (losePanel) losePanel.SetActive(true);
     }
 
-    // ── Button callbacks ──────────────────────────
     public void Retry()
     {
         Time.timeScale = 1f;
@@ -120,13 +114,12 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         int next = SceneManager.GetActiveScene().buildIndex + 1;
         SceneManager.LoadScene(
-            next < SceneManager.sceneCountInBuildSettings ? next : 0
-        );
+            next < SceneManager.sceneCountInBuildSettings ? next : 0);
     }
 
     void UpdateUI()
     {
-        if (scoreText)     scoreText.text     = $"Score: {_score}";
-        if (birdsLeftText) birdsLeftText.text  = $"Birds: {_birdsLeft}";
+        if (scoreText)     scoreText.text    = $"Score: {_score}";
+        if (birdsLeftText) birdsLeftText.text = $"Birds: {BirdsLeft}";
     }
 }

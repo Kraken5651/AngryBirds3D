@@ -3,73 +3,73 @@ using UnityEngine;
 public class Pig : MonoBehaviour
 {
     [Header("Health")]
-    public float maxHealth      = 100f;
-    public float currentHealth  = 100f;
+    public float maxHealth = 100f;
 
-    [Header("Impact")]
-    public float minImpactForce = 5f;  // ignore tiny bumps
+    [Header("Damage")]
+    public float minImpactForce  = 3f;
+    public float fallDamageScale = 5f;
+    public float minFallSpeed    = 2f;
+
+    [Header("Void Kill")]
+    public float voidYThreshold = -8f;
 
     [Header("Effects")]
-    public GameObject deathFX; // particle prefab — assign in Inspector
+    public GameObject deathFX;
 
-    // ── Private ──────────────────────────────────
-    private Renderer _rend;
-    private Color    _baseColor;
-    private bool     _dead = false;
+    private float     _health;
+    private Renderer  _rend;
+    private Color     _baseColor;
+    private bool      _dead = false;
+    private Rigidbody _rb;
 
-    // ── Start ────────────────────────────────────
     void Start()
     {
+        _health    = maxHealth;
         _rend      = GetComponent<Renderer>();
         _baseColor = _rend.material.color;
-        currentHealth = maxHealth;
+        _rb        = GetComponent<Rigidbody>();
     }
 
-    // ── Called by Bird.cs or other scripts ───────
-    public void TakeDamage(float amount)
+    void Update()
     {
         if (_dead) return;
-
-        currentHealth -= amount;
-        UpdateColor();
-
-        if (currentHealth <= 0f) Die();
+        if (transform.position.y < voidYThreshold)
+            TakeDamage(maxHealth * 99f);
     }
 
-    // ── Also react to physics impacts ────────────
-    // (e.g. blocks falling on pig, or pig hitting wall)
+    public void TakeDamage(float amount)
+    {
+        if (_dead || amount <= 0f) return;
+        _health -= amount;
+        _health  = Mathf.Max(0f, _health);
+        UpdateColor();
+        if (_health <= 0f) Die();
+    }
+
     void OnCollisionEnter(Collision col)
     {
         if (_dead) return;
-
-        // Don't double-count bird hits (Bird.cs handles those)
         if (col.gameObject.CompareTag("Bird")) return;
 
-        float impact = col.impulse.magnitude;
-        if (impact > minImpactForce)
-            TakeDamage(impact * 0.5f);
+        float impactSpeed = col.relativeVelocity.magnitude;
+        if (impactSpeed >= minFallSpeed)
+            TakeDamage(impactSpeed * fallDamageScale);
     }
 
-    // ── Visual: green -> yellow -> red ───────────
     void UpdateColor()
     {
-        float t = 1f - Mathf.Clamp01(currentHealth / maxHealth);
+        if (_rend == null) return;
+        float t = 1f - Mathf.Clamp01(_health / maxHealth);
         _rend.material.color = Color.Lerp(_baseColor, Color.red, t);
     }
 
-    // ── Die ──────────────────────────────────────
     void Die()
     {
+        if (_dead) return;
         _dead = true;
-
-        // Spawn pop particle effect
         if (deathFX != null)
             Instantiate(deathFX, transform.position, Quaternion.identity);
-
-        // Notify GameManager
-        if (GameManager.Instance != null)
-            GameManager.Instance.PigKilled();
-
+        GameManager.Instance?.PigKilled();
         Destroy(gameObject);
     }
 }

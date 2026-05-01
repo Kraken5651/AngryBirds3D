@@ -1,95 +1,187 @@
 using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Slingshot : MonoBehaviour
 {
     [Header("References")]
-    public GameObject   birdPrefab;
-    public Transform    launchPoint;
-    public LineRenderer trajectoryLine;
-    public Camera       mainCamera;
+    public List<GameObject> birdTypePrefabs = new List<GameObject>();
+    public Transform        launchPoint;
+    public LineRenderer     trajectoryLine;
+    public Camera           mainCamera;
 
     [Header("Tuning")]
     public float maxDragDistance = 2f;
     public float launchForce     = 15f;
-    public int   trajectoryDots  = 25;
-    public float timeStep        = 0.1f;
+    public int   trajectoryDots  = 30;
+    public float timeStep        = 0.08f;
 
     [Header("Drag Cone")]
     [Range(10f, 160f)]
-    public float  dragAngleLimit   = 60f;
+    public float   dragAngleLimit  = 60f;
     public Vector3 launchDirection = Vector3.right;
 
     [Header("Smoothing")]
-    [Range(0.05f, 1f)]
-    public float dragSmoothSpeed = 0.12f;  // lower = smoother/lazier
+    [Range(0.02f, 1f)]
+    public float dragSmoothSpeed = 0.1f;
+
+    [Header("Line Renderer")]
+    public float lineWidth     = 0.08f;
+    public Color lineColor     = new Color(1f, 1f, 1f, 0.85f);
+
+    [Header("UI (optional)")]
+    public TMP_Text birdTypeLabel;
 
     // ── Private ───────────────────────────────────
     private GameObject _bird;
     private Rigidbody  _rb;
-    private bool       _dragging   = false;
-    private bool       _disabled   = false;   // true when birds run out
+    private bool       _dragging       = false;
+    private bool       _disabled       = false;
+    private bool       _waitingForNext = false;
     private Vector3    _currentOffset  = Vector3.zero;
     private Vector3    _targetOffset   = Vector3.zero;
-    private Vector3    _offsetVelocity = Vector3.zero; // for SmoothDamp
+    private Vector3    _offsetVelocity = Vector3.zero;
+    private int        _selectedIndex  = 0;
+
+    // Add this field at the top with other references:
+    [Header("Camera")]
+    public GameCameraController gameCamera; // drag camera GO here
+
+    private readonly KeyCode[] _keys = {
+        KeyCode.Alpha1, KeyCode.Alpha2,
+        KeyCode.Alpha3, KeyCode.Alpha4,
+        KeyCode.Alpha5, KeyCode.Alpha6
+    };
 
     void Start()
     {
         if (mainCamera == null) mainCamera = Camera.main;
+
+        // Configure LineRenderer properly at start
+        if (trajectoryLine != null)
+        {
+            trajectoryLine.startWidth  = lineWidth;
+            trajectoryLine.endWidth    = lineWidth * 0.5f;
+            trajectoryLine.startColor  = lineColor;
+            trajectoryLine.endColor    = new Color(lineColor.r, lineColor.g, lineColor.b, 0f);
+            trajectoryLine.positionCount = 0;
+            trajectoryLine.useWorldSpace = true;
+
+            // Use a simple unlit material so it always renders visibly
+            trajectoryLine.material = new Material(Shader.Find("Sprites/Default"));
+        }
+
         SpawnBird();
     }
 
     void Update()
     {
+        // R to restart — always works regardless of game state
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.V))
+            gameCamera?.TogglePip();
+
         if (_disabled) return;
 
-        if (Input.GetMouseButtonDown(0))           BeginDrag();
-        if (Input.GetMouseButton(0)  && _dragging) Drag();
+        HandleTypeSwitch();
+
+        if (_waitingForNext) return;
+
+        if (Input.GetMouseButtonDown(0))            BeginDrag();
+        if (Input.GetMouseButton(0)   && _dragging) Drag();
         if (Input.GetMouseButtonUp(0) && _dragging) Launch();
 
-        // Always smoothly animate bird position toward target
-        if (_bird != null && _dragging)
+        // Smooth bird position every frame while dragging
+        if (_bird != null && _dragging && _rb != null)
         {
             _currentOffset = Vector3.SmoothDamp(
-                _currentOffset,
-                _targetOffset,
-                ref _offsetVelocity,
-                dragSmoothSpeed
+                _currentOffset, _targetOffset,
+                ref _offsetVelocity, dragSmoothSpeed
             );
             _bird.transform.position = launchPoint.position + _currentOffset;
-            DrawArc(_bird.transform.position, -_currentOffset * launchForce);
+
+            // Always update arc while dragging
+            UpdateArc();
+        }
+    }
+
+    void HandleTypeSwitch()
+    {
+        for (int i = 0; i < _keys.Length; i++)
+        {
+            if (!Input.GetKeyDown(_keys[i])) continue;
+            if (i >= birdTypePrefabs.Count)  continue;
+
+            _selectedIndex = i;
+            UpdateLabel();
+
+            if (_bird != null && !_waitingForNext)
+            {
+                Destroy(_bird);
+                _bird = null;
+                _rb   = null;
+                SpawnBird();
+            }
+            break;
         }
     }
 
     void SpawnBird()
     {
-        _bird = Instantiate(birdPrefab, launchPoint.position, Quaternion.identity);
-        _rb   = _bird.GetComponent<Rigidbody>();
+        if (GameManager.Instance != null && GameManager.Instance.BirdsLeft <= 0)
+        {
+            Disable();
+            return;
+        }
+
+        if (birdTypePrefabs.Count == 0) return;
+
+        int idx = Mathf.Clamp(_selectedIndex, 0, birdTypePrefabs.Count - 1);
+
+        _bird = Instantiate(birdTypePrefabs[idx],
+                            launchPoint.position,
+                            Quaternion.identity);
+        _rb             = _bird.GetComponent<Rigidbody>();
         _rb.isKinematic = true;
+
         _currentOffset  = Vector3.zero;
         _targetOffset   = Vector3.zero;
         _offsetVelocity = Vector3.zero;
-        trajectoryLine.positionCount = 0;
+        _waitingForNext = false;
+
+        gameCamera?.SetActiveBird(null); // reset — bird is on slingshot not flying
+
+        if (trajectoryLine != null)
+            trajectoryLine.positionCount = 0;
+
+        UpdateLabel();
     }
 
     void BeginDrag()
     {
-        _dragging = true;
+        if (_bird == null) return;
+        _dragging       = true;
         _offsetVelocity = Vector3.zero;
     }
 
     void Drag()
     {
-        // Mouse → world
+        if (mainCamera == null) return;
+
         Vector3 m = Input.mousePosition;
         m.z = Vector3.Distance(mainCamera.transform.position, launchPoint.position);
-        Vector3 worldPos = mainCamera.ScreenToWorldPoint(m);
-
-        // Raw offset, projected flat
+        Vector3 worldPos   = mainCamera.ScreenToWorldPoint(m);
         Vector3 offset     = worldPos - launchPoint.position;
         Vector3 flatOffset = Vector3.ProjectOnPlane(offset, mainCamera.transform.forward);
         flatOffset         = Vector3.ClampMagnitude(flatOffset, maxDragDistance);
 
-        // Cone constraint
         Vector3 pullBack = -launchDirection.normalized;
         float   angle    = Vector3.Angle(flatOffset, pullBack);
         if (angle > dragAngleLimit)
@@ -97,54 +189,55 @@ public class Slingshot : MonoBehaviour
             flatOffset = Vector3.RotateTowards(
                 pullBack * flatOffset.magnitude,
                 flatOffset,
-                dragAngleLimit * Mathf.Deg2Rad,
-                0f
+                dragAngleLimit * Mathf.Deg2Rad, 0f
             );
         }
 
-        // Set as target — SmoothDamp in Update() chases this
         _targetOffset = flatOffset;
     }
 
     void Launch()
     {
-        _dragging = false;
-        trajectoryLine.positionCount = 0;
+        Bird launchedBird = _bird.GetComponent<Bird>();
+        launchedBird?.OnLaunched();
+        gameCamera?.SetActiveBird(_bird.transform);
 
-        // Launch using the smoothed current offset, not raw mouse
+        if (_bird == null || _rb == null) return;
+
+        _dragging       = false;
+        _waitingForNext = true;
+
+        if (trajectoryLine != null)
+            trajectoryLine.positionCount = 0;
+
         Vector3 dir = -_currentOffset;
-
         _rb.isKinematic = false;
         _rb.AddForce(dir * launchForce, ForceMode.Impulse);
 
+        _bird.GetComponent<Bird>()?.OnLaunched();
+
+        gameCamera?.SetActiveBird(_bird != null ? _bird.transform : null);
+
+
+        // Release references so flying bird is fully independent
+        _bird           = null;
+        _rb             = null;
         _currentOffset  = Vector3.zero;
         _targetOffset   = Vector3.zero;
         _offsetVelocity = Vector3.zero;
 
-        if (GameManager.Instance != null)
-            GameManager.Instance.BirdLaunched();
+        GameManager.Instance?.BirdLaunched();
 
         Invoke(nameof(SpawnBird), 2.5f);
     }
 
-    // Called by GameManager when birds hit 0
-    public void Disable()
+    void UpdateArc()
     {
-        _disabled = true;
-        trajectoryLine.positionCount = 0;
+        if (trajectoryLine == null || _rb == null) return;
 
-        // Destroy the queued bird sitting on the slingshot
-        if (_bird != null) Destroy(_bird);
-
-        // Cancel any pending SpawnBird calls
-        CancelInvoke(nameof(SpawnBird));
-    }
-
-    void DrawArc(Vector3 startPos, Vector3 startForce)
-    {
         trajectoryLine.positionCount = trajectoryDots;
-        Vector3 pos = startPos;
-        Vector3 vel = startForce / _rb.mass;
+        Vector3 pos = launchPoint.position + _currentOffset;
+        Vector3 vel = (-_currentOffset * launchForce) / _rb.mass;
 
         for (int i = 0; i < trajectoryDots; i++)
         {
@@ -154,16 +247,33 @@ public class Slingshot : MonoBehaviour
         }
     }
 
+    public void Disable()
+    {
+        _disabled = true;
+        if (trajectoryLine != null) trajectoryLine.positionCount = 0;
+        if (_bird != null) { Destroy(_bird); _bird = null; }
+        _rb = null;
+        CancelInvoke(nameof(SpawnBird));
+    }
+
+    void UpdateLabel()
+    {
+        if (birdTypeLabel == null) return;
+        string[] names = { "Red", "Chuck", "Bomb", "Blue" };
+        int idx = Mathf.Clamp(_selectedIndex, 0, names.Length - 1);
+        birdTypeLabel.text = $"[{idx + 1}] {names[idx]}";
+    }
+
     void OnDrawGizmosSelected()
     {
         if (launchPoint == null) return;
-        Vector3 pullBack = -launchDirection.normalized * maxDragDistance;
+        Vector3 pb = -launchDirection.normalized * maxDragDistance;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawRay(launchPoint.position, pullBack);
+        Gizmos.DrawRay(launchPoint.position, pb);
         Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
         Gizmos.DrawRay(launchPoint.position,
-            Quaternion.AngleAxis( dragAngleLimit, Vector3.up) * pullBack);
+            Quaternion.AngleAxis( dragAngleLimit, Vector3.up) * pb);
         Gizmos.DrawRay(launchPoint.position,
-            Quaternion.AngleAxis(-dragAngleLimit, Vector3.up) * pullBack);
+            Quaternion.AngleAxis(-dragAngleLimit, Vector3.up) * pb);
     }
 }

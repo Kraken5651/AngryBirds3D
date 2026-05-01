@@ -1,0 +1,1 @@
+public enum BirdType { Red, Chuck, Bomb, Blue }
