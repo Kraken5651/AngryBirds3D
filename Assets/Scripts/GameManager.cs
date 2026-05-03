@@ -26,6 +26,12 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        // Destroy duplicate
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance  = this;
         BirdsLeft = totalBirds;
         if (winPanel)  winPanel.SetActive(false);
