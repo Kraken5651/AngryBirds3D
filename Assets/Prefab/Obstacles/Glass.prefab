@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1968363288097990007}
   - component: {fileID: 1893419957552592948}
   - component: {fileID: 9183689020155735429}
+  - component: {fileID: -311983092204193933}
   m_Layer: 0
   m_Name: Glass
   m_TagString: Untagged
@@ -140,3 +141,17 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-311983092204193933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1733001567665824225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6676f7342aff8704aaf06967b213ee6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Structure
+  type: 1
+  breakFX: {fileID: 8689578534526646269, guid: de4649f49895cd3459ce324a78fb333d, type: 3}
