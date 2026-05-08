@@ -7,11 +7,10 @@ public class ChuckBird : Bird
     public float gravityOffTime  = 0.35f;
 
     private TrailRenderer _trail;
-    private bool          _gravityRestored = false;
 
     protected override void Awake()
     {
-        base.Awake();
+        base.Awake(); // fires spawnFX automatically
         birdType = BirdType.Chuck;
 
         _trail            = gameObject.AddComponent<TrailRenderer>();
@@ -33,7 +32,6 @@ public class ChuckBird : Bird
         _rb.linearVelocity = v * speedMultiplier;
         _rb.useGravity     = false;
         _trail.enabled     = true;
-        _gravityRestored   = false;
 
         Invoke(nameof(RestoreGravity), gravityOffTime);
     }
@@ -41,11 +39,9 @@ public class ChuckBird : Bird
     void RestoreGravity()
     {
         if (_rb == null) return;
-        _rb.useGravity   = true;
-        _gravityRestored = true;
+        _rb.useGravity = true;
     }
 
-    // Chuck deals bonus damage on post-boost collision
     protected override void OnCollisionEnter(Collision col)
     {
         if (!_launched) return;
@@ -55,7 +51,6 @@ public class ChuckBird : Bird
         if (!_hasHit && speed >= minSpeedToHit)
         {
             _hasHit = true;
-            // Extra damage multiplier when boosted
             float mult = _abilityUsed ? 2.2f : 1f;
             DealDamage(col.gameObject, baseDamage * speed * 0.25f * mult);
         }
@@ -66,19 +61,12 @@ public class ChuckBird : Bird
             if (_rb != null)
             {
                 Vector3 v = _rb.linearVelocity;
-                _rb.linearVelocity = new Vector3(v.x * 0.7f, Mathf.Abs(v.y) * bounciness, v.z * 0.7f);
+                _rb.linearVelocity = new Vector3(
+                    v.x * 0.7f,
+                    Mathf.Abs(v.y) * bounciness,
+                    v.z * 0.7f);
             }
             Invoke(nameof(KillBounce), 0.3f);
         }
-    }
-
-    void KillBounce()
-    {
-        if (_rb == null) return;
-        var mat = new PhysicsMaterial { bounciness = 0f };
-        GetComponent<Collider>().material = mat;
-        _rb.linearDamping  = 2f;
-        _rb.angularDamping = 3f;
-        Destroy(gameObject, 3f);
     }
 }

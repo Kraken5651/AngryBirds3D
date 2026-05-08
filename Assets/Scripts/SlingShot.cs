@@ -21,6 +21,11 @@ public class Slingshot : MonoBehaviour
     [Range(10f, 160f)]
     public float   dragAngleLimit  = 60f;
     public Vector3 launchDirection = Vector3.right;
+    // Add these fields in the Header("Drag Cone") section:
+    [Header("Sideways Aim")]
+    [Range(0f, 45f)]
+    public float maxSidewaysAngle = 25f;   // how far left/right you can angle
+    public float sidewaysSpeed    = 80f;   // degrees per second with A/D or Q/E
 
     [Header("Smoothing")]
     [Range(0.02f, 1f)]
@@ -44,6 +49,10 @@ public class Slingshot : MonoBehaviour
     private Vector3    _offsetVelocity = Vector3.zero;
     private int        _selectedIndex  = 0;
 
+    private float _sidewaysAngle = 0f;    // current horizontal aim offset
+
+    public Transform CurrentBird => _bird != null ? _bird.transform : null;
+
     // Add this field at the top with other references:
     [Header("Camera")]
     public GameCameraController gameCamera; // drag camera GO here
@@ -53,6 +62,8 @@ public class Slingshot : MonoBehaviour
         KeyCode.Alpha3, KeyCode.Alpha4,
         KeyCode.Alpha5, KeyCode.Alpha6
     };
+
+    
 
     void Start()
     {
@@ -75,6 +86,19 @@ public class Slingshot : MonoBehaviour
         SpawnBird();
     }
 
+    void HandleSidewaysAim()
+    {
+        // A/D or Left/Right arrow to rotate aim angle
+        float input = 0f;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  input -= 1f;
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) input += 1f;
+
+        _sidewaysAngle += input * sidewaysSpeed * Time.deltaTime;
+        _sidewaysAngle  = Mathf.Clamp(_sidewaysAngle, -maxSidewaysAngle, maxSidewaysAngle);
+    }
+
+
+
     void Update()
     {
         // R to restart — always works regardless of game state
@@ -92,7 +116,9 @@ public class Slingshot : MonoBehaviour
 
         HandleTypeSwitch();
 
-        if (_waitingForNext) return;
+        if (!_waitingForNext) HandleSidewaysAim();
+
+        HandleSidewaysAim();
 
         if (Input.GetMouseButtonDown(0))            BeginDrag();
         if (Input.GetMouseButton(0)   && _dragging) Drag();
@@ -193,7 +219,8 @@ public class Slingshot : MonoBehaviour
             );
         }
 
-        _targetOffset = flatOffset;
+        Quaternion sidewaysRot = Quaternion.AngleAxis(_sidewaysAngle, Vector3.up);
+        _targetOffset = sidewaysRot * flatOffset;
     }
 
     void Launch()

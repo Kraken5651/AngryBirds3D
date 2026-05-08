@@ -14,12 +14,16 @@ public class Bird : MonoBehaviour
     [Header("Bounce")]
     public float bounciness = 0.35f;
 
+    [Header("VFX")]
+    public GameObject spawnFX; // puff when bird appears on slingshot
+    public GameObject deathFX; // feather burst when bird dies
+
     // ── State ─────────────────────────────────────
-    protected bool       _launched    = false;
-    protected bool       _hasHit      = false;
-    protected bool       _hasBounced  = false;
-    public    bool       _abilityUsed = false;
-    public    Rigidbody  _rb;
+    protected bool      _launched    = false;
+    protected bool      _hasHit      = false;
+    protected bool      _hasBounced  = false;
+    public    bool      _abilityUsed = false;
+    public    Rigidbody _rb;
     private   PhysicsMaterial _bounceMat;
 
     protected virtual void Awake()
@@ -33,6 +37,10 @@ public class Bird : MonoBehaviour
             frictionCombine = PhysicsMaterialCombine.Minimum
         };
         GetComponent<Collider>().material = _bounceMat;
+
+        // Spawn puff at birth
+        if (spawnFX != null)
+            Instantiate(spawnFX, transform.position, Quaternion.identity);
     }
 
     protected virtual void Update()
@@ -40,7 +48,6 @@ public class Bird : MonoBehaviour
         if (!_launched)                   return;
         if (_abilityUsed)                 return;
         if (!Input.GetMouseButtonDown(1)) return;
-
         _abilityUsed = true;
         UseAbility();
     }
@@ -49,8 +56,6 @@ public class Bird : MonoBehaviour
 
     protected virtual void UseAbility() { }
 
-    // Central damage dealer — calls TakeDamage directly on Pig
-    // This bypasses OnCollisionEnter on Pig so there's no double-hit
     protected void DealDamage(GameObject target, float dmg)
     {
         if (target == null) return;
@@ -76,7 +81,6 @@ public class Bird : MonoBehaviour
             if (_rb != null)
             {
                 Vector3 v = _rb.linearVelocity;
-                // Preserve horizontal momentum, flip vertical with bounciness
                 _rb.linearVelocity = new Vector3(
                     v.x * 0.75f,
                     Mathf.Abs(v.y) * bounciness,
@@ -89,6 +93,11 @@ public class Bird : MonoBehaviour
     protected void KillBounce()
     {
         if (this == null || gameObject == null) return;
+
+        // Spawn death VFX before destroying
+        if (deathFX != null)
+            Instantiate(deathFX, transform.position, Quaternion.identity);
+
         if (_bounceMat != null)
         {
             _bounceMat.bounciness         = 0f;

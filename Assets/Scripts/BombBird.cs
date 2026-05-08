@@ -4,17 +4,19 @@ using System.Collections;
 public class BombBird : Bird
 {
     [Header("Bomb")]
-    public float      explosionRadius  = 8f;    // large — if pig touches this, it dies
-    public float      explosionForce   = 80f;   // tiny nudge only, not void-launch
-    public float      explosionDamage  = 9999f; // instant kill anything in radius
-    public float      fuseTime         = 0.2f;
+    public float      explosionRadius = 8f;
+    public float      explosionForce  = 80f;
+    public float      explosionDamage = 9999f;
+    public float      fuseTime        = 0.2f;
     public GameObject explosionFXPrefab;
+    // spawnFX inherited from Bird — assign in Inspector
+    // deathFX intentionally unused — explosion handles it
 
     private bool _fuseStarted = false;
 
     protected override void Awake()
     {
-        base.Awake();
+        base.Awake(); // fires spawnFX automatically
         birdType = BirdType.Bomb;
     }
 
@@ -73,7 +75,6 @@ public class BombBird : Bird
         if (fxPrefab != null)
             Instantiate(fxPrefab, pos, Quaternion.identity);
 
-        // Find every collider in radius
         Collider[] hits     = new Collider[64];
         int        hitCount = Physics.OverlapSphereNonAlloc(pos, radius, hits);
 
@@ -82,27 +83,19 @@ public class BombBird : Bird
             Collider hit = hits[i];
             if (hit == null || hit.gameObject == null) continue;
 
-            // ── Pig: direct TakeDamage — no falloff, full kill ───
             Pig pig = hit.GetComponent<Pig>();
             if (pig != null)
             {
-                pig.TakeDamage(damage); // 9999 — always kills
-                // Tiny upward nudge just for visual reaction
+                pig.TakeDamage(damage);
                 Rigidbody pigRb = hit.GetComponent<Rigidbody>();
                 if (pigRb != null && !pigRb.isKinematic)
                     pigRb.AddForce(Vector3.up * force, ForceMode.Impulse);
                 continue;
             }
 
-            // ── Structure: full damage ────────────────────────────
             Structure s = hit.GetComponent<Structure>();
-            if (s != null)
-            {
-                s.TakeDamage(damage * 0.8f);
-                continue;
-            }
+            if (s != null) { s.TakeDamage(damage * 0.8f); continue; }
 
-            // ── Everything else: physics blast ────────────────────
             Rigidbody rb = hit.GetComponent<Rigidbody>();
             if (rb != null && !rb.isKinematic)
                 rb.AddExplosionForce(force * 5f, pos, radius, 0.5f, ForceMode.Impulse);
