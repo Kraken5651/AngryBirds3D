@@ -95,6 +95,12 @@ public class Structure : MonoBehaviour
         };
         GameManager.Instance?.AddScore(score);
 
+        string sfx = type switch {
+            BlockType.Glass => "GlassBreak",
+            _               => "WoodBreak"   // Wood and Stone both use wood thud
+        };
+        AudioManager.Instance?.Play(sfx);
+
         Destroy(gameObject);
     }
 }

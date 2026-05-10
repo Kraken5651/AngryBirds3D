@@ -30,6 +30,7 @@ public class ChuckBird : Bird
         if (v.sqrMagnitude < 0.01f) return;
 
         _rb.linearVelocity = v * speedMultiplier;
+        AudioManager.Instance?.Play("ChuckBoost");
         _rb.useGravity     = false;
         _trail.enabled     = true;
 

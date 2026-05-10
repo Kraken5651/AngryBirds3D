@@ -242,6 +242,7 @@ void SpawnBirdFromPrefab(GameObject prefab)
     {
         if (_bird == null) return;
         _dragging       = true;
+        AudioManager.Instance?.Play("SlingshotDrag");
         _offsetVelocity = Vector3.zero;
     }
 
@@ -288,6 +289,13 @@ void SpawnBirdFromPrefab(GameObject prefab)
         Vector3 dir = -_currentOffset;
         _rb.isKinematic = false;
         _rb.AddForce(dir * launchForce, ForceMode.Impulse);
+        Bird b = _bird?.GetComponent<Bird>();
+string launchSound = b?.birdType switch {
+    BirdType.Chuck => "ChuckLaunch",
+    BirdType.Bomb  => "BombLaunch",
+    _              => "RedLaunch"
+};
+AudioManager.Instance?.Play(launchSound);
 
         _bird.GetComponent<Bird>()?.OnLaunched();
 

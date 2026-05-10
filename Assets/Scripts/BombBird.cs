@@ -71,6 +71,7 @@ public class BombBird : Bird
         GameObject fxPrefab = explosionFXPrefab;
 
         Destroy(gameObject);
+        AudioManager.Instance?.Play("BombExplosion");
 
         if (fxPrefab != null)
             Instantiate(fxPrefab, pos, Quaternion.identity);

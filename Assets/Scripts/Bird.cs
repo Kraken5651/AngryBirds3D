@@ -40,7 +40,16 @@ public class Bird : MonoBehaviour
 
         // Spawn puff at birth
         if (spawnFX != null)
+        {
             Instantiate(spawnFX, transform.position, Quaternion.identity);
+            string spawnSound = birdType switch {
+    BirdType.Chuck => "ChuckSpawn",
+    BirdType.Bomb  => "BombSpawn",
+    _              => "RedSpawn"
+};
+AudioManager.Instance?.Play(spawnSound);
+        }
+            
     }
 
     protected virtual void Update()
@@ -73,6 +82,12 @@ public class Bird : MonoBehaviour
         {
             _hasHit = true;
             DealDamage(col.gameObject, baseDamage * speed * 0.25f);
+            string hitSound = birdType switch {
+    BirdType.Chuck => "ChuckHit",
+    BirdType.Bomb  => "BombHit",
+    _              => "RedHit"
+};
+AudioManager.Instance?.Play(hitSound);
         }
 
         if (!_hasBounced)
@@ -95,9 +110,16 @@ public class Bird : MonoBehaviour
         if (this == null || gameObject == null) return;
 
         // Spawn death VFX before destroying
-        if (deathFX != null)
+        if (deathFX != null){
             Instantiate(deathFX, transform.position, Quaternion.identity);
-
+            string deathSound = birdType switch {
+    BirdType.Chuck => "ChuckDeath",
+    BirdType.Bomb  => "BombDeath",
+    _              => "RedDeath"
+};
+AudioManager.Instance?.Play(deathSound);
+        }
+    
         if (_bounceMat != null)
         {
             _bounceMat.bounciness         = 0f;

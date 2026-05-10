@@ -5,6 +5,12 @@ public class Pig : MonoBehaviour
     [Header("Health")]
     public float maxHealth = 100f;
 
+    [Header("Idle Sound")]
+    public float idleInterval    = 5f;   // seconds between idle sounds
+    public float idleIntervalRand = 3f;  // random extra delay on top
+
+    private float _nextIdleTime = 0f;
+
     [Header("Damage")]
     public float minImpactForce  = 3f;
     public float fallDamageScale = 5f;
@@ -35,6 +41,13 @@ public class Pig : MonoBehaviour
         if (_dead) return;
         if (transform.position.y < voidYThreshold)
             TakeDamage(maxHealth * 99f);
+        
+        if (Time.time >= _nextIdleTime)
+{
+    AudioManager.Instance?.Play("PigIdle");
+    _nextIdleTime = Time.time + idleInterval
+                  + Random.Range(0f, idleIntervalRand);
+}
     }
 
     public void TakeDamage(float amount)
@@ -68,7 +81,10 @@ public class Pig : MonoBehaviour
         if (_dead) return;
         _dead = true;
         if (deathFX != null)
+        {
             Instantiate(deathFX, transform.position, Quaternion.identity);
+            AudioManager.Instance?.Play("PigDeath");
+        }
         GameManager.Instance?.PigKilled();
         Destroy(gameObject);
     }
