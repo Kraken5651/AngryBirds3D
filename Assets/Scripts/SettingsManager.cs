@@ -5,10 +5,8 @@ using TMPro;
 public class SettingsManager : MonoBehaviour
 {
     [Header("Audio")]
-    public Slider masterSlider;
     public Slider musicSlider;
     public Slider sfxSlider;
-    public Toggle musicToggle;
 
     [Header("Graphics")]
     public TMP_Dropdown qualityDropdown;
@@ -51,18 +49,27 @@ public class SettingsManager : MonoBehaviour
 
     void LoadSettings()
     {
-        float master  = PlayerPrefs.GetFloat("MasterVolume", 1f);
-        float music   = PlayerPrefs.GetFloat("MusicVolume",  0.7f);
-        float sfx     = PlayerPrefs.GetFloat("SFXVolume",    1f);
-        bool  musicOn = PlayerPrefs.GetInt("MusicOn", 1) == 1;
-        int   quality = PlayerPrefs.GetInt("Quality", 2);
-        bool  fs      = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
+        float music   = PlayerPrefs.GetFloat("MusicVolume", 0.7f);
+        float sfx     = PlayerPrefs.GetFloat("SFXVolume",   1f);
+        int   quality = PlayerPrefs.GetInt("Quality",       2);
+        bool  fs      = PlayerPrefs.GetInt("Fullscreen",    1) == 1;
 
-        if (masterSlider)      masterSlider.value      = master;
-        if (musicSlider)       musicSlider.value       = music;
-        if (sfxSlider)         sfxSlider.value         = sfx;
-        if (musicToggle)       musicToggle.isOn        = musicOn;
-        if (fullscreenToggle)  fullscreenToggle.isOn   = fs;
+        // Set slider values — min 0, max 1
+        if (musicSlider != null)
+        {
+            musicSlider.minValue = 0f;
+            musicSlider.maxValue = 1f;
+            musicSlider.value    = music;
+        }
+
+        if (sfxSlider != null)
+        {
+            sfxSlider.minValue = 0f;
+            sfxSlider.maxValue = 1f;
+            sfxSlider.value    = sfx;
+        }
+
+        if (fullscreenToggle) fullscreenToggle.isOn = fs;
 
         if (qualityDropdown != null)
         {
@@ -71,28 +78,18 @@ public class SettingsManager : MonoBehaviour
             qualityDropdown.RefreshShownValue();
         }
 
-        // Apply to engine directly — no AudioManager needed
-        AudioListener.volume = master;
+        // Apply immediately
+        ApplyMusicVolume(music);
+        PlayerPrefs.SetFloat("SFXVolume", sfx);
         QualitySettings.SetQualityLevel(quality);
-        Screen.fullScreen    = fs;
-
-        // Save so AudioManager picks them up when game scene loads
-        PlayerPrefs.SetFloat("MusicVolume", music);
-        PlayerPrefs.SetFloat("SFXVolume",   sfx);
-        PlayerPrefs.SetInt("MusicOn",        musicOn ? 1 : 0);
+        Screen.fullScreen = fs;
         PlayerPrefs.Save();
     }
 
     // ── Slider callbacks ──────────────────────────
-    public void OnMasterVolumeChanged(float value)
-    {
-        AudioListener.volume = value;
-        PlayerPrefs.SetFloat("MasterVolume", value);
-        PlayerPrefs.Save();
-    }
-
     public void OnMusicVolumeChanged(float value)
     {
+        ApplyMusicVolume(value);
         PlayerPrefs.SetFloat("MusicVolume", value);
         PlayerPrefs.Save();
     }
@@ -103,13 +100,17 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // ── Toggle callbacks ──────────────────────────
-    public void OnMusicToggleChanged(bool isOn)
+    // Applies music volume to AudioManager if present
+    // or directly to AudioListener if not (main menu)
+    void ApplyMusicVolume(float value)
     {
-        PlayerPrefs.SetInt("MusicOn", isOn ? 1 : 0);
-        PlayerPrefs.Save();
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.SetMusicVolume(value);
+        else
+            AudioListener.volume = value;
     }
 
+    // ── Toggle callbacks ──────────────────────────
     public void OnFullscreenToggleChanged(bool isOn)
     {
         Screen.fullScreen = isOn;

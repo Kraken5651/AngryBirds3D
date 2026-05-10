@@ -247,6 +247,22 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: Retry
       objectReference: {fileID: 0}
+    - target: {fileID: 6178843152627728552, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 643836044}
+    - target: {fileID: 6178843152627728552, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetSFXVolume
+      objectReference: {fileID: 0}
+    - target: {fileID: 6662682335451897764, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 643836044}
+    - target: {fileID: 6662682335451897764, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetMusicVolume
+      objectReference: {fileID: 0}
     - target: {fileID: 7230712543031912914, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -260,7 +276,9 @@ PrefabInstance:
       value: Canvas
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2791574074359586567, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+    - {fileID: 2752791642418878057, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
@@ -296,6 +314,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 642069704573366561, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
   m_PrefabInstance: {fileID: 175334956}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &175334961 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3486458837082465876, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+  m_PrefabInstance: {fileID: 175334956}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &226576398
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -372,6 +401,11 @@ PrefabInstance:
 --- !u!4 &226576399 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2500593519970290008, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
+  m_PrefabInstance: {fileID: 226576398}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &226576400 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
   m_PrefabInstance: {fileID: 226576398}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &273172531
@@ -811,6 +845,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
+--- !u!1 &416112859 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
+  m_PrefabInstance: {fileID: 416112858}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &567284030
 GameObject:
   m_ObjectHideFlags: 0
@@ -904,6 +943,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &643836044 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6882811732977516740, guid: e0a3ff891d3039743bef9c0d01ff265e, type: 3}
+  m_PrefabInstance: {fileID: 273172531}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa4c72e47c1b6dd4ea91b9c1a1a7f99f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+--- !u!114 &765369305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6143437174059447061, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+  m_PrefabInstance: {fileID: 175334956}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,6 +1114,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 749e577cf474f2d459be986410f06617, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Slingshot
+--- !u!114 &939709208 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2924706394803921604, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+  m_PrefabInstance: {fileID: 175334956}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &971827024
 GameObject:
   m_ObjectHideFlags: 0
@@ -1201,6 +1273,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2491cc6fa95eaa64c864b7513aa3a250, type: 3}
+--- !u!1 &1482976664 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: 2491cc6fa95eaa64c864b7513aa3a250, type: 3}
+  m_PrefabInstance: {fileID: 1482976663}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1531638239 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7516475902466937979, guid: 463b394d6e7ffd94eb81d9499de79414, type: 3}
@@ -1236,25 +1313,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   scoreText: {fileID: 175334959}
-  birdsLeftText: {fileID: 175334958}
+  birdsLeftText: {fileID: 765369305}
+  currentBirdText: {fileID: 175334958}
   winPanel: {fileID: 175334957}
-  winScoreText: {fileID: 0}
-  winTitleText: {fileID: 0}
+  winScoreText: {fileID: 175334961}
+  winTitleText: {fileID: 175334961}
   star1: {fileID: 0}
   star2: {fileID: 0}
   star3: {fileID: 0}
   losePanel: {fileID: 175334960}
-  loseScoreText: {fileID: 0}
-  oneStarScore: 3000
-  twoStarScore: 6000
-  threeStarScore: 10000
+  loseScoreText: {fileID: 939709208}
+  oneStarScore: 500
+  twoStarScore: 1000
+  threeStarScore: 1500
   birdQueue:
   - prefab: {fileID: 5311558087868015961, guid: 642399e01df5a634b846ab4b33ed56c4, type: 3}
     count: 1
+    birdName: Bomb
   - prefab: {fileID: 5311558087868015961, guid: 9f04df5f7ae44914fa17b7f9ff6c4b74, type: 3}
     count: 2
+    birdName: Chuck
   - prefab: {fileID: 5311558087868015961, guid: 6dcf91945b7f9f345a7d6a5a1015e79a, type: 3}
     count: 2
+    birdName: s
+  pigObjects:
+  - {fileID: 1482976664}
+  - {fileID: 416112859}
+  - {fileID: 226576400}
   scorePerPig: 500
   scoreBird: 1000
   slingshot: {fileID: 935043493}
@@ -1491,7 +1576,7 @@ PrefabInstance:
     - target: {fileID: 6100829154841827398, guid: 463b394d6e7ffd94eb81d9499de79414, type: 3}
       propertyPath: birdTypeLabel
       value: 
-      objectReference: {fileID: 175334958}
+      objectReference: {fileID: 0}
     - target: {fileID: 6100829154841827398, guid: 463b394d6e7ffd94eb81d9499de79414, type: 3}
       propertyPath: dragAngleLimit
       value: 30

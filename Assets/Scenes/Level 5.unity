@@ -951,6 +951,22 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: Retry
       objectReference: {fileID: 0}
+    - target: {fileID: 6178843152627728552, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1875720924}
+    - target: {fileID: 6178843152627728552, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetSFXVolume
+      objectReference: {fileID: 0}
+    - target: {fileID: 6662682335451897764, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1875720924}
+    - target: {fileID: 6662682335451897764, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetMusicVolume
+      objectReference: {fileID: 0}
     - target: {fileID: 7230712543031912914, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -964,7 +980,9 @@ PrefabInstance:
       value: Canvas
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2752791642418878057, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+    - {fileID: 2791574074359586567, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
@@ -2275,24 +2293,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   scoreText: {fileID: 647279320}
   birdsLeftText: {fileID: 647279319}
+  currentBirdText: {fileID: 647279317}
   winPanel: {fileID: 647279318}
-  winScoreText: {fileID: 0}
+  winScoreText: {fileID: 1949395549}
   winTitleText: {fileID: 0}
   star1: {fileID: 0}
   star2: {fileID: 0}
   star3: {fileID: 0}
   losePanel: {fileID: 647279321}
-  loseScoreText: {fileID: 0}
+  loseScoreText: {fileID: 1949395548}
   oneStarScore: 3000
   twoStarScore: 6000
   threeStarScore: 10000
   birdQueue:
   - prefab: {fileID: 5311558087868015961, guid: 6dcf91945b7f9f345a7d6a5a1015e79a, type: 3}
     count: 3
+    birdName: Red
   - prefab: {fileID: 5311558087868015961, guid: 9f04df5f7ae44914fa17b7f9ff6c4b74, type: 3}
     count: 3
+    birdName: Chuck
   - prefab: {fileID: 5311558087868015961, guid: 642399e01df5a634b846ab4b33ed56c4, type: 3}
     count: 2
+    birdName: Bomb
+  pigObjects: []
   scorePerPig: 500
   scoreBird: 1000
   slingshot: {fileID: 935043493}
@@ -2636,6 +2659,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e0a3ff891d3039743bef9c0d01ff265e, type: 3}
+--- !u!114 &1875720924 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6882811732977516740, guid: e0a3ff891d3039743bef9c0d01ff265e, type: 3}
+  m_PrefabInstance: {fileID: 1875720923}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa4c72e47c1b6dd4ea91b9c1a1a7f99f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
 --- !u!1001 &1899664030
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2714,6 +2748,28 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6850648985690028550, guid: 2f18a63422ff62f40bf7c907fe007258, type: 3}
   m_PrefabInstance: {fileID: 1899664030}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1949395548 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2924706394803921604, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+  m_PrefabInstance: {fileID: 647279316}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &1949395549 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3486458837082465876, guid: a8e9f0089d6e3fb41b86838511ac6168, type: 3}
+  m_PrefabInstance: {fileID: 647279316}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1977285537
 GameObject:
   m_ObjectHideFlags: 0
@@ -2868,7 +2924,7 @@ PrefabInstance:
     - target: {fileID: 6100829154841827398, guid: 463b394d6e7ffd94eb81d9499de79414, type: 3}
       propertyPath: birdTypeLabel
       value: 
-      objectReference: {fileID: 647279317}
+      objectReference: {fileID: 0}
     - target: {fileID: 6100829154841827398, guid: 463b394d6e7ffd94eb81d9499de79414, type: 3}
       propertyPath: dragAngleLimit
       value: 30
