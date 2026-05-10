@@ -139,41 +139,89 @@ public class Slingshot : MonoBehaviour
     }
 
     void HandleTypeSwitch()
+{
+    for (int i = 0; i < _keys.Length; i++)
     {
-        for (int i = 0; i < _keys.Length; i++)
+        if (!Input.GetKeyDown(_keys[i])) continue;
+
+        // Find which prefabs are available in the remaining queue
+        // Just preview — don't dequeue anything
+        var queueList = new System.Collections.Generic.List<GameObject>(
+            GameManager.Instance.SpawnQueue.ToArray());
+
+        if (queueList.Count == 0) return;
+
+        // Clamp index to available queue size
+        int idx = Mathf.Clamp(i, 0, queueList.Count - 1);
+
+        // Destroy current sitting bird and replace visually
+        // WITHOUT touching the queue — just reorder queue front
+        if (_bird != null && !_waitingForNext)
         {
-            if (!Input.GetKeyDown(_keys[i])) continue;
-            if (i >= birdTypePrefabs.Count)  continue;
+            Destroy(_bird);
+            _bird = null;
+            _rb   = null;
 
-            _selectedIndex = i;
-            UpdateLabel();
-
-            if (_bird != null && !_waitingForNext)
-            {
-                Destroy(_bird);
-                _bird = null;
-                _rb   = null;
-                SpawnBird();
-            }
-            break;
+            // Spawn the selected prefab visually only
+            // Reinsert the current front back and swap with selected
+            ReorderQueue(idx);
+            SpawnBirdFromPrefab(queueList[idx]);
         }
-    }
 
+        UpdateLabel();
+        break;
+    }
+}
+
+void ReorderQueue(int selectedIdx)
+{
+    // Pull queue into a list
+    var list = new System.Collections.Generic.List<GameObject>(
+        GameManager.Instance.SpawnQueue.ToArray());
+
+    if (selectedIdx >= list.Count) return;
+
+    // Swap selected to front without removing from queue
+    GameObject selected = list[selectedIdx];
+    list.RemoveAt(selectedIdx);
+    list.Insert(0, selected);
+
+    // Rebuild queue with new order
+    GameManager.Instance.SpawnQueue.Clear();
+    foreach (var prefab in list)
+        GameManager.Instance.SpawnQueue.Enqueue(prefab);
+}
+
+void SpawnBirdFromPrefab(GameObject prefab)
+{
+    _bird = Instantiate(prefab, launchPoint.position, Quaternion.identity);
+    _rb             = _bird.GetComponent<Rigidbody>();
+    _rb.isKinematic = true;
+
+    _currentOffset  = Vector3.zero;
+    _targetOffset   = Vector3.zero;
+    _offsetVelocity = Vector3.zero;
+    _waitingForNext = false;
+
+    gameCamera?.SetActiveBird(null);
+
+    if (trajectoryLine != null)
+        trajectoryLine.positionCount = 0;
+}
     void SpawnBird()
     {
-        if (GameManager.Instance != null && GameManager.Instance.BirdsLeft <= 0)
+        // Check queue has birds remaining
+        if (GameManager.Instance == null ||
+            GameManager.Instance.SpawnQueue.Count == 0)
         {
             Disable();
             return;
         }
 
-        if (birdTypePrefabs.Count == 0) return;
+        // Dequeue next bird prefab
+        GameObject prefab = GameManager.Instance.SpawnQueue.Dequeue();
 
-        int idx = Mathf.Clamp(_selectedIndex, 0, birdTypePrefabs.Count - 1);
-
-        _bird = Instantiate(birdTypePrefabs[idx],
-                            launchPoint.position,
-                            Quaternion.identity);
+        _bird = Instantiate(prefab, launchPoint.position, Quaternion.identity);
         _rb             = _bird.GetComponent<Rigidbody>();
         _rb.isKinematic = true;
 
@@ -182,10 +230,10 @@ public class Slingshot : MonoBehaviour
         _offsetVelocity = Vector3.zero;
         _waitingForNext = false;
 
-        gameCamera?.SetActiveBird(null); // reset — bird is on slingshot not flying
+        gameCamera?.SetActiveBird(null);
 
         if (trajectoryLine != null)
-            trajectoryLine.positionCount = 0;
+        trajectoryLine.positionCount = 0;
 
         UpdateLabel();
     }

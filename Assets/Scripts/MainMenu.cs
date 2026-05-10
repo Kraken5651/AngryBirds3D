@@ -5,28 +5,34 @@ public class MainMenu : MonoBehaviour
 {
     public GameObject settingsPanel;
 
-    // PLAY GAME
-    public void PlayGame()
+    void Start()
     {
-        SceneManager.LoadScene("GameScene");
+        // Apply saved settings when main menu loads
+        AudioListener.volume = PlayerPrefs.GetFloat("MasterVolume", 1f);
+        Screen.fullScreen    = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
+        QualitySettings.SetQualityLevel(PlayerPrefs.GetInt("Quality", 2));
+        Time.timeScale = 1f; // safety reset if coming from paused game
     }
 
-    // OPEN SETTINGS
+    public void PlayGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
     public void OpenSettings()
     {
         settingsPanel.SetActive(true);
     }
 
-    // CLOSE SETTINGS
     public void CloseSettings()
     {
         settingsPanel.SetActive(false);
     }
 
-    // QUIT GAME
     public void QuitGame()
     {
-        Debug.Log("Quit Game");
         Application.Quit();
     }
+
+    
 }
