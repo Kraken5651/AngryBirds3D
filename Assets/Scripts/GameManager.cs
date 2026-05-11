@@ -10,26 +10,17 @@ public class GameManager : MonoBehaviour
     [Header("UI — HUD")]
     public TMP_Text   scoreText;
     public TMP_Text   birdsLeftText;
-    public TMP_Text   currentBirdText;  // shows "Red x3" etc
+    public TMP_Text   currentBirdText;
 
     [Header("UI — Win Screen")]
     public GameObject winPanel;
     public TMP_Text   winScoreText;
-    public TMP_Text   winTitleText;
-    public GameObject star1;
-    public GameObject star2;
-    public GameObject star3;
 
     [Header("UI — Lose Screen")]
     public GameObject losePanel;
     public TMP_Text   loseScoreText;
 
-    [Header("Star Thresholds")]
-    public int oneStarScore   = 3000;
-    public int twoStarScore   = 6000;
-    public int threeStarScore = 10000;
-
-    [Header("Bird Queue — set type and count per level")]
+    [Header("Bird Queue")]
     public List<BirdEntry> birdQueue = new List<BirdEntry>();
 
     [Header("Pigs — assign all pig GameObjects in level")]
@@ -42,26 +33,21 @@ public class GameManager : MonoBehaviour
     [Header("References")]
     public Slingshot slingshot;
 
-    // ── Bird entry ────────────────────────────────
     [System.Serializable]
     public class BirdEntry
     {
         public GameObject prefab;
         public int        count;
-        public string     birdName; // e.g. "Red", "Chuck", "Bomb", "Blue"
+        public string     birdName;
     }
 
-    // ── Tracks remaining per type for display ─────
-    private Dictionary<string, int> _birdCounts
-        = new Dictionary<string, int>();
+    private Dictionary<string, int> _birdCounts = new Dictionary<string, int>();
 
     public Queue<GameObject> SpawnQueue { get; set; }
     public int               BirdsLeft  { get; private set; }
 
-    private int  _score         = 0;
-    private bool _gameOver      = false;
-    private int  _totalPigs     = 0;
-    private int  _pigsRemaining = 0;
+    private int  _score    = 0;
+    private bool _gameOver = false;
 
     void Awake()
     {
@@ -80,11 +66,10 @@ public class GameManager : MonoBehaviour
         UpdateUI();
     }
 
-    // ── Build queue + count per type ─────────────
     void BuildSpawnQueue()
     {
-        SpawnQueue   = new Queue<GameObject>();
-        _birdCounts  = new Dictionary<string, int>();
+        SpawnQueue  = new Queue<GameObject>();
+        _birdCounts = new Dictionary<string, int>();
 
         foreach (BirdEntry entry in birdQueue)
         {
@@ -93,7 +78,6 @@ public class GameManager : MonoBehaviour
             for (int i = 0; i < entry.count; i++)
                 SpawnQueue.Enqueue(entry.prefab);
 
-            // Track count per named type
             string name = string.IsNullOrEmpty(entry.birdName)
                           ? entry.prefab.name
                           : entry.birdName;
@@ -107,35 +91,28 @@ public class GameManager : MonoBehaviour
         BirdsLeft = SpawnQueue.Count;
     }
 
-    // ── Register pigs — from Inspector list ───────
     void SetupPigs()
     {
-        // Remove any nulls from list
         pigObjects.RemoveAll(p => p == null);
-        _totalPigs     = pigObjects.Count;
-        _pigsRemaining = _totalPigs;
     }
 
-    // ── Called by Slingshot after each launch ─────
     public void BirdLaunched()
     {
         if (_gameOver) return;
         BirdsLeft--;
-
-        // Reduce count for the type that just launched
         UpdateBirdCountForLaunch();
         UpdateUI();
 
         if (BirdsLeft <= 0)
         {
             if (slingshot != null) slingshot.Disable();
+            // Wait for last bird to land then check
             Invoke(nameof(CheckEndCondition), 4f);
         }
     }
 
     void UpdateBirdCountForLaunch()
     {
-        // Find first type still with count > 0 and decrement
         foreach (BirdEntry entry in birdQueue)
         {
             string name = string.IsNullOrEmpty(entry.birdName)
@@ -157,22 +134,26 @@ public class GameManager : MonoBehaviour
     {
         if (_gameOver) return;
 
-        _score         += scorePerPig;
-        _pigsRemaining  = Mathf.Max(0, _pigsRemaining - 1);
+        _score += scorePerPig;
         UpdateUI();
 
+        // Victory the INSTANT last pig dies
+        // Doesn't matter how many birds are left
         if (GetPigCount() == 0)
         {
             CancelInvoke(nameof(CheckEndCondition));
-            Invoke(nameof(WinGame), 0.8f);
+            Invoke(nameof(WinGame), 0.6f);
         }
     }
 
+    // Only called when birds run out
     void CheckEndCondition()
     {
         if (_gameOver) return;
+
+        // If somehow all pigs died during last bird flight
         if (GetPigCount() == 0) WinGame();
-        else                    LoseGame();
+        else                    LoseGame(); // birds gone, pigs alive = lose
     }
 
     public void AddScore(int pts)
@@ -185,29 +166,18 @@ public class GameManager : MonoBehaviour
     int GetPigCount() =>
         FindObjectsByType<Pig>(FindObjectsInactive.Exclude).Length;
 
-    // ── Win ───────────────────────────────────────
     void WinGame()
     {
         if (_gameOver) return;
         _gameOver = true;
 
+        // Bonus for unused birds
         _score += BirdsLeft * scoreBird;
         UpdateUI();
 
-        int stars = 0;
-        if (_score >= oneStarScore)   stars = 1;
-        if (_score >= twoStarScore)   stars = 2;
-        if (_score >= threeStarScore) stars = 3;
-
-        if (star1) star1.SetActive(stars >= 1);
-        if (star2) star2.SetActive(stars >= 2);
-        if (star3) star3.SetActive(stars >= 3);
-
         if (winScoreText) winScoreText.text = $"Score: {_score}";
-        if (winTitleText) winTitleText.text  = stars == 3 ? "Perfect!"
-                                             : stars == 2 ? "Great!"
-                                             : "Level Clear!";
 
+        // Save best score
         string key = $"Best_{SceneManager.GetActiveScene().buildIndex}";
         if (_score > PlayerPrefs.GetInt(key, 0))
             PlayerPrefs.SetInt(key, _score);
@@ -217,7 +187,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    // ── Lose ──────────────────────────────────────
     void LoseGame()
     {
         if (_gameOver) return;
@@ -228,7 +197,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    // ── Button callbacks ──────────────────────────
     public void Retry()
     {
         Time.timeScale = 1f;
@@ -249,7 +217,6 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(0);
     }
 
-    // ── UI ────────────────────────────────────────
     void UpdateUI()
     {
         if (scoreText)
@@ -258,7 +225,6 @@ public class GameManager : MonoBehaviour
         if (birdsLeftText)
             birdsLeftText.text = $"Birds: {BirdsLeft}";
 
-        // Build bird count display — "Red x2  Chuck x1  Bomb x1"
         if (currentBirdText != null)
         {
             if (_birdCounts.Count == 0)
