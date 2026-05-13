@@ -13,22 +13,18 @@ public class GameCameraController : MonoBehaviour
     public float   topDownFOV      = 75f;
 
     [Header("Free Camera")]
-    public float freeMoveSpeed     = 15f;
-    public float mouseSensitivity  = 2f;
+    public float freeMoveSpeed    = 15f;
+    public float mouseSensitivity = 2f;
 
     [Header("Transition")]
-    public float transitionSpeed   = 5f;
-
-    [Header("PiP Camera")]
-    public Camera pipCamera;
-    public bool   showPip          = true;
+    public float transitionSpeed = 5f;
 
     [Header("Landing Predictor")]
-    public LineRenderer landingLine;     // assign a LineRenderer on any GO
-    public GameObject   landingMarker;  // small sphere/disc prefab shown at landing
+    public LineRenderer landingLine;
+    public GameObject   landingMarker;
     public int          predictionSteps = 60;
     public float        predictionStep  = 0.1f;
-    public LayerMask    collisionMask;  // what counts as ground/wall
+    public LayerMask    collisionMask;
 
     // ── Private ───────────────────────────────────
     private Camera     _cam;
@@ -54,7 +50,6 @@ public class GameCameraController : MonoBehaviour
         _targetRot       = _defaultRotation;
         _targetFOV       = _defaultFOV;
 
-        SetupPip();
         SetupLandingPredictor();
     }
 
@@ -62,24 +57,15 @@ public class GameCameraController : MonoBehaviour
     {
         HandleInput();
         SmoothMove();
-        UpdatePip();
         UpdateLandingPredictor();
     }
 
     void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            int next = ((int)currentMode + 1)
-                       % System.Enum.GetValues(typeof(CameraMode)).Length;
-            SetMode((CameraMode)next);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha7)) SetMode(CameraMode.Default);
-        if (Input.GetKeyDown(KeyCode.Alpha8)) SetMode(CameraMode.TopDown);
-        if (Input.GetKeyDown(KeyCode.Alpha9)) SetMode(CameraMode.Free);
-
-        if (Input.GetKeyDown(KeyCode.P)) TogglePip();
+        // Only F keys remain — no V, no 7/8/9
+        if (Input.GetKeyDown(KeyCode.F1)) SetMode(CameraMode.Default);
+        if (Input.GetKeyDown(KeyCode.F2)) SetMode(CameraMode.TopDown);
+        if (Input.GetKeyDown(KeyCode.F3)) SetMode(CameraMode.Free);
 
         if (currentMode == CameraMode.Free) HandleFreeCamera();
     }
@@ -111,6 +97,7 @@ public class GameCameraController : MonoBehaviour
     void SmoothMove()
     {
         if (currentMode == CameraMode.Free) return;
+
         transform.position = Vector3.Lerp(transform.position, _targetPos,
                                           Time.deltaTime * transitionSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, _targetRot,
@@ -148,43 +135,6 @@ public class GameCameraController : MonoBehaviour
             freeMoveSpeed + Input.GetAxis("Mouse ScrollWheel") * 20f, 2f, 80f);
     }
 
-    // ── PiP ───────────────────────────────────────
-    void SetupPip()
-    {
-        if (pipCamera == null) return;
-
-        // Kill the second AudioListener — fixes console error
-        AudioListener al = pipCamera.GetComponent<AudioListener>();
-        if (al != null) Destroy(al);
-
-        pipCamera.rect    = new Rect(0.73f, 0.02f, 0.25f, 0.20f);
-        pipCamera.enabled = showPip;
-        pipCamera.fieldOfView = 55f;
-    }
-
-    void UpdatePip()
-    {
-        if (pipCamera == null || !pipCamera.enabled) return;
-
-        // Keep tracking as long as _activeBird exists
-        // SetActiveBird(null) is only called when next bird spawns on slingshot
-        // NOT called on launch — so PiP keeps bird until it's destroyed
-        if (_activeBird == null) return;
-
-        Vector3 pipTarget = _activeBird.position + new Vector3(0f, 5f, -7f);
-        pipCamera.transform.position = Vector3.Lerp(
-            pipCamera.transform.position, pipTarget,
-            Time.deltaTime * 10f);  // fast follow so bird stays in frame
-        pipCamera.transform.LookAt(_activeBird.position);
-    }
-
-    public void TogglePip()
-    {
-        if (pipCamera == null) return;
-        showPip           = !showPip;
-        pipCamera.enabled = showPip;
-    }
-
     // ── Landing predictor ─────────────────────────
     void SetupLandingPredictor()
     {
@@ -206,14 +156,12 @@ public class GameCameraController : MonoBehaviour
 
     void UpdateLandingPredictor()
     {
-        // Only show predictor when bird is in flight
         if (_activeBird == null || _activeBirdRb == null)
         {
             HidePredictor();
             return;
         }
 
-        // Simulate trajectory from current bird position + velocity
         Vector3 pos = _activeBird.position;
         Vector3 vel = _activeBirdRb.linearVelocity;
 
@@ -223,21 +171,19 @@ public class GameCameraController : MonoBehaviour
             return;
         }
 
-        Vector3[] points      = new Vector3[predictionSteps];
-        Vector3   hitPoint    = Vector3.zero;
+        Vector3[] points       = new Vector3[predictionSteps];
+        Vector3   hitPoint     = Vector3.zero;
         bool      foundLanding = false;
-        int       pointCount  = 0;
+        int       pointCount   = 0;
 
         for (int i = 0; i < predictionSteps; i++)
         {
             points[i]  = pos;
             pointCount = i + 1;
 
-            // Step simulation
             vel += Physics.gravity * predictionStep;
             Vector3 nextPos = pos + vel * predictionStep;
 
-            // Raycast each step to find collision
             if (Physics.Raycast(pos, nextPos - pos,
                 out RaycastHit hit,
                 Vector3.Distance(pos, nextPos),
@@ -251,14 +197,12 @@ public class GameCameraController : MonoBehaviour
             pos = nextPos;
         }
 
-        // Draw the prediction line
         if (landingLine != null)
         {
             landingLine.positionCount = pointCount;
             landingLine.SetPositions(points);
         }
 
-        // Show landing marker where bird will hit
         if (_landingMarkerInst != null)
         {
             _landingMarkerInst.SetActive(foundLanding);
@@ -273,13 +217,10 @@ public class GameCameraController : MonoBehaviour
         if (_landingMarkerInst != null) _landingMarkerInst.SetActive(false);
     }
 
-    // ── Called by Slingshot ───────────────────────
     public void SetActiveBird(Transform bird)
     {
         _activeBird   = bird;
         _activeBirdRb = bird != null ? bird.GetComponent<Rigidbody>() : null;
-
-        // Hide predictor when no bird in flight
         if (bird == null) HidePredictor();
     }
 }
