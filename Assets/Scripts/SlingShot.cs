@@ -49,6 +49,9 @@ public class Slingshot : MonoBehaviour
 
     public Transform CurrentBird => _bird != null ? _bird.transform : null;
 
+    private GameObject _currentPrefab = null;
+
+
     void Start()
     {
         if (mainCamera == null) mainCamera = Camera.main;
@@ -107,61 +110,59 @@ public class Slingshot : MonoBehaviour
         _sidewaysAngle  = Mathf.Clamp(_sidewaysAngle, -maxSidewaysAngle, maxSidewaysAngle);
     }
 
-    void HandleTypeSwitch()
+void HandleTypeSwitch()
+{
+    if (GameManager.Instance == null) return;
+
+    BirdType? requested = null;
+    if (Input.GetKeyDown(KeyCode.Alpha1)) requested = BirdType.Red;
+    if (Input.GetKeyDown(KeyCode.Alpha2)) requested = BirdType.Chuck;
+    if (Input.GetKeyDown(KeyCode.Alpha3)) requested = BirdType.Bomb;
+
+    if (requested == null) return;
+
+    var list = new List<GameObject>(
+        GameManager.Instance.SpawnQueue.ToArray());
+
+    if (list.Count == 0) return;
+
+    // Find first occurrence of requested type in queue
+    int foundIdx = -1;
+    for (int i = 0; i < list.Count; i++)
     {
-        if (GameManager.Instance == null) return;
-
-        // Map key to BirdType
-        BirdType? requested = null;
-        if (Input.GetKeyDown(KeyCode.Alpha1)) requested = BirdType.Red;
-        if (Input.GetKeyDown(KeyCode.Alpha2)) requested = BirdType.Chuck;
-        if (Input.GetKeyDown(KeyCode.Alpha3)) requested = BirdType.Bomb;
-
-        if (requested == null) return;
-
-        var list = new List<GameObject>(
-            GameManager.Instance.SpawnQueue.ToArray());
-
-        if (list.Count == 0) return;
-
-        // Find first occurrence of requested type in queue
-        int foundIdx = -1;
-        for (int i = 0; i < list.Count; i++)
+        Bird b = list[i].GetComponent<Bird>();
+        if (b != null && b.birdType == requested.Value)
         {
-            Bird b = list[i].GetComponent<Bird>();
-            if (b != null && b.birdType == requested.Value)
-            {
-                foundIdx = i;
-                break;
-            }
+            foundIdx = i;
+            break;
         }
-
-        // Type not in queue — do nothing
-        if (foundIdx == -1) return;
-
-        // Already at front — nothing to swap
-        if (foundIdx == 0) return;
-
-        // Swap found bird to front of queue
-        GameObject selected = list[foundIdx];
-        list.RemoveAt(foundIdx);
-        list.Insert(0, selected);
-
-        // Rebuild queue with new order
-        GameManager.Instance.SpawnQueue.Clear();
-        foreach (var p in list)
-            GameManager.Instance.SpawnQueue.Enqueue(p);
-
-        // Replace sitting bird with the swapped type
-        if (_bird != null)
-        {
-            Destroy(_bird);
-            _bird = null;
-            _rb   = null;
-        }
-
-        InstantiateBird(selected);
     }
+
+    if (foundIdx == -1) return; // type not available
+    if (foundIdx == 0)  return; // already at front
+
+    // Swap to front
+    GameObject selected = list[foundIdx];
+    list.RemoveAt(foundIdx);
+    list.Insert(0, selected);
+
+    // Rebuild queue
+    GameManager.Instance.SpawnQueue.Clear();
+    foreach (var p in list)
+        GameManager.Instance.SpawnQueue.Enqueue(p);
+
+    // Replace sitting bird
+    if (_bird != null)
+    {
+        Destroy(_bird);
+        _bird = null;
+        _rb   = null;
+    }
+
+    InstantiateBird(selected);
+}
+
+
 
     void SpawnBird()
     {
@@ -180,19 +181,20 @@ public class Slingshot : MonoBehaviour
             trajectoryLine.positionCount = 0;
     }
 
-    void InstantiateBird(GameObject prefab)
-    {
-        _bird           = Instantiate(prefab, launchPoint.position, Quaternion.identity);
-        _rb             = _bird.GetComponent<Rigidbody>();
-        _rb.isKinematic = true;
-        _currentOffset  = Vector3.zero;
-        _targetOffset   = Vector3.zero;
-        _offsetVelocity = Vector3.zero;
-        _waitingForNext = false;
+void InstantiateBird(GameObject prefab)
+{
+    _currentPrefab  = prefab; // track which prefab is sitting
+    _bird           = Instantiate(prefab, launchPoint.position, Quaternion.identity);
+    _rb             = _bird.GetComponent<Rigidbody>();
+    _rb.isKinematic = true;
+    _currentOffset  = Vector3.zero;
+    _targetOffset   = Vector3.zero;
+    _offsetVelocity = Vector3.zero;
+    _waitingForNext = false;
 
-        if (trajectoryLine != null)
-            trajectoryLine.positionCount = 0;
-    }
+    if (trajectoryLine != null)
+        trajectoryLine.positionCount = 0;
+}
 
     void BeginDrag()
     {
@@ -257,7 +259,7 @@ public class Slingshot : MonoBehaviour
         _targetOffset   = Vector3.zero;
         _offsetVelocity = Vector3.zero;
 
-        GameManager.Instance?.BirdLaunched();
+        GameManager.Instance?.BirdLaunched(_currentPrefab);
         Invoke(nameof(SpawnBird), 2.5f);
     }
 

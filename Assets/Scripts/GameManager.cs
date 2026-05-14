@@ -93,34 +93,37 @@ public class GameManager : MonoBehaviour
         _pigsAlive = pigObjects.Count;
     }
 
-    public void BirdLaunched()
-    {
-        if (_gameOver) return;
-        BirdsLeft--;
-        UpdateBirdCountForLaunch();
-        UpdateUI();
+   public void BirdLaunched(GameObject launchedPrefab)
+{
+    if (_gameOver) return;
+    BirdsLeft--;
+    UpdateBirdCountForLaunch(launchedPrefab);
+    UpdateUI();
 
-        if (BirdsLeft <= 0)
-        {
-            if (slingshot != null) slingshot.Disable();
-            Invoke(nameof(CheckEndCondition), 4f);
-        }
-    }
-
-    void UpdateBirdCountForLaunch()
+    if (BirdsLeft <= 0)
     {
-        foreach (BirdEntry entry in birdQueue)
-        {
-            string name = string.IsNullOrEmpty(entry.birdName)
-                          ? entry.prefab.name : entry.birdName;
-            if (_birdCounts.ContainsKey(name) && _birdCounts[name] > 0)
-            {
-                _birdCounts[name]--;
-                if (_birdCounts[name] <= 0) _birdCounts.Remove(name);
-                break;
-            }
-        }
+        if (slingshot != null) slingshot.Disable();
+        Invoke(nameof(CheckEndCondition), 4f);
     }
+}
+
+    void UpdateBirdCountForLaunch(GameObject launchedPrefab)
+{
+    foreach (BirdEntry entry in birdQueue)
+    {
+        if (entry.prefab != launchedPrefab) continue;
+
+        string name = string.IsNullOrEmpty(entry.birdName)
+                      ? entry.prefab.name : entry.birdName;
+
+        if (_birdCounts.ContainsKey(name) && _birdCounts[name] > 0)
+        {
+            _birdCounts[name]--;
+            if (_birdCounts[name] <= 0) _birdCounts.Remove(name);
+        }
+        break;
+    }
+}
 
     // ── Called by Pig.Die() ───────────────────────
     public void PigKilled()
@@ -133,10 +136,10 @@ public class GameManager : MonoBehaviour
 
         // Win the instant counter hits zero
         // No FindObjects — counter is always accurate
-        if (_pigsAlive == 0)
+         if (_pigsAlive == 0)
         {
             CancelInvoke();
-            WinGame();
+            Invoke(nameof(WinGame), 3f);
         }
     }
 

@@ -197,6 +197,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6850648985690028550, guid: 2f18a63422ff62f40bf7c907fe007258, type: 3}
   m_PrefabInstance: {fileID: 116790903}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &302941628 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: 2491cc6fa95eaa64c864b7513aa3a250, type: 3}
+  m_PrefabInstance: {fileID: 571907383}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,8 +373,6 @@ MonoBehaviour:
   freeMoveSpeed: 10
   mouseSensitivity: 2
   transitionSpeed: 5
-  pipCamera: {fileID: 0}
-  showPip: 0
   landingLine: {fileID: 935043492}
   landingMarker: {fileID: 1852365613}
   predictionSteps: 30
@@ -2118,6 +2121,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6850648985690028550, guid: 2f18a63422ff62f40bf7c907fe007258, type: 3}
   m_PrefabInstance: {fileID: 1382075010}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1437146388 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
+  m_PrefabInstance: {fileID: 475951698}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1437999853
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2321,7 +2329,12 @@ MonoBehaviour:
   - prefab: {fileID: 5311558087868015961, guid: 642399e01df5a634b846ab4b33ed56c4, type: 3}
     count: 2
     birdName: Bomb
-  pigObjects: []
+  pigObjects:
+  - {fileID: 1748852114}
+  - {fileID: 302941628}
+  - {fileID: 1844536567}
+  - {fileID: 1982905533}
+  - {fileID: 1437146388}
   scorePerPig: 500
   scoreBird: 1000
   slingshot: {fileID: 935043493}
@@ -2598,10 +2611,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1264431926}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1748852114 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: 2491cc6fa95eaa64c864b7513aa3a250, type: 3}
+  m_PrefabInstance: {fileID: 1303370259}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1774436926 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1012983109991597408, guid: 2b54b5319f5557840811eac802ee4949, type: 3}
   m_PrefabInstance: {fileID: 1145915810}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1844536567 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: 2491cc6fa95eaa64c864b7513aa3a250, type: 3}
+  m_PrefabInstance: {fileID: 934851870}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1852365613 stripped
 GameObject:
@@ -2809,6 +2832,11 @@ Transform:
   - {fileID: 705759288}
   m_Father: {fileID: 1264431926}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1982905533 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8853776735498984101, guid: c81b3708f7cd3e044add3df51a42b80a, type: 3}
+  m_PrefabInstance: {fileID: 1078511032}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2024713988
 PrefabInstance:
   m_ObjectHideFlags: 0
