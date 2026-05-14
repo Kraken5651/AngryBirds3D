@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     [Header("Bird Queue")]
     public List<BirdEntry> birdQueue = new List<BirdEntry>();
 
-    [Header("Pigs")]
+    [Header("Pigs — assign all pig GameObjects in level")]
     public List<GameObject> pigObjects = new List<GameObject>();
 
     [Header("Settings")]
@@ -41,13 +41,14 @@ public class GameManager : MonoBehaviour
         public string     birdName;
     }
 
-    private Dictionary<string, int> _birdCounts = new Dictionary<string, int>();
+    private Dictionary<string, int> _birdCounts  = new Dictionary<string, int>();
 
     public Queue<GameObject> SpawnQueue { get; set; }
     public int               BirdsLeft  { get; private set; }
 
-    private int  _score    = 0;
-    private bool _gameOver = false;
+    private int  _score       = 0;
+    private int  _pigsAlive   = 0; // tracked by counter — no FindObjects needed
+    private bool _gameOver    = false;
 
     void Awake()
     {
@@ -88,6 +89,8 @@ public class GameManager : MonoBehaviour
     void SetupPigs()
     {
         pigObjects.RemoveAll(p => p == null);
+        // Counter starts at how many pigs are in the scene
+        _pigsAlive = pigObjects.Count;
     }
 
     public void BirdLaunched()
@@ -119,18 +122,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // ── Called by Pig.Die() ───────────────────────
     public void PigKilled()
     {
         if (_gameOver) return;
-        _score += scorePerPig;
+
+        _score     += scorePerPig;
+        _pigsAlive  = Mathf.Max(0, _pigsAlive - 1);
         UpdateUI();
 
-        // Count live pigs right now
-        int remaining = FindObjectsByType<Pig>(FindObjectsInactive.Exclude).Length;
-
-        if (remaining == 0)
+        // Win the instant counter hits zero
+        // No FindObjects — counter is always accurate
+        if (_pigsAlive == 0)
         {
-            // Cancel everything — win immediately no matter what
             CancelInvoke();
             WinGame();
         }
@@ -139,9 +143,8 @@ public class GameManager : MonoBehaviour
     void CheckEndCondition()
     {
         if (_gameOver) return;
-        int remaining = FindObjectsByType<Pig>(FindObjectsInactive.Exclude).Length;
-        if (remaining == 0) WinGame();
-        else                LoseGame();
+        if (_pigsAlive == 0) WinGame();
+        else                 LoseGame();
     }
 
     public void AddScore(int pts)
@@ -197,8 +200,8 @@ public class GameManager : MonoBehaviour
 
     void UpdateUI()
     {
-        if (scoreText)     scoreText.text     = $"Score: {_score}";
-        if (birdsLeftText) birdsLeftText.text  = $"Birds: {BirdsLeft}";
+        if (scoreText)     scoreText.text    = $"Score: {_score}";
+        if (birdsLeftText) birdsLeftText.text = $"Birds: {BirdsLeft}";
 
         if (currentBirdText != null)
         {

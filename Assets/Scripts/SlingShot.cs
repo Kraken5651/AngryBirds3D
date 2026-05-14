@@ -69,7 +69,6 @@ public class Slingshot : MonoBehaviour
 
     void Update()
     {
-        // R always restarts
         if (Input.GetKeyDown(KeyCode.R))
         {
             Time.timeScale = 1f;
@@ -108,51 +107,62 @@ public class Slingshot : MonoBehaviour
         _sidewaysAngle  = Mathf.Clamp(_sidewaysAngle, -maxSidewaysAngle, maxSidewaysAngle);
     }
 
-    // ── 1/2/3 swaps front of queue — no dequeue ──
     void HandleTypeSwitch()
     {
         if (GameManager.Instance == null) return;
 
-        KeyCode[] keys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3 };
+        // Map key to BirdType
+        BirdType? requested = null;
+        if (Input.GetKeyDown(KeyCode.Alpha1)) requested = BirdType.Red;
+        if (Input.GetKeyDown(KeyCode.Alpha2)) requested = BirdType.Chuck;
+        if (Input.GetKeyDown(KeyCode.Alpha3)) requested = BirdType.Bomb;
 
-        for (int i = 0; i < keys.Length; i++)
+        if (requested == null) return;
+
+        var list = new List<GameObject>(
+            GameManager.Instance.SpawnQueue.ToArray());
+
+        if (list.Count == 0) return;
+
+        // Find first occurrence of requested type in queue
+        int foundIdx = -1;
+        for (int i = 0; i < list.Count; i++)
         {
-            if (!Input.GetKeyDown(keys[i])) continue;
-
-            var list = new List<GameObject>(
-                GameManager.Instance.SpawnQueue.ToArray());
-
-            // Key index must exist in queue
-            if (i >= list.Count) break;
-
-            // Already at front — do nothing
-            if (i == 0) break;
-
-            // Swap selected index to front
-            GameObject selected = list[i];
-            list.RemoveAt(i);
-            list.Insert(0, selected);
-
-            // Rebuild queue
-            GameManager.Instance.SpawnQueue.Clear();
-            foreach (var p in list)
-                GameManager.Instance.SpawnQueue.Enqueue(p);
-
-            // Replace sitting bird visually
-            if (_bird != null)
+            Bird b = list[i].GetComponent<Bird>();
+            if (b != null && b.birdType == requested.Value)
             {
-                Destroy(_bird);
-                _bird = null;
-                _rb   = null;
+                foundIdx = i;
+                break;
             }
-
-            // Spawn the new front bird — no Dequeue, just peek
-            InstantiateBird(list[0]);
-            break;
         }
+
+        // Type not in queue — do nothing
+        if (foundIdx == -1) return;
+
+        // Already at front — nothing to swap
+        if (foundIdx == 0) return;
+
+        // Swap found bird to front of queue
+        GameObject selected = list[foundIdx];
+        list.RemoveAt(foundIdx);
+        list.Insert(0, selected);
+
+        // Rebuild queue with new order
+        GameManager.Instance.SpawnQueue.Clear();
+        foreach (var p in list)
+            GameManager.Instance.SpawnQueue.Enqueue(p);
+
+        // Replace sitting bird with the swapped type
+        if (_bird != null)
+        {
+            Destroy(_bird);
+            _bird = null;
+            _rb   = null;
+        }
+
+        InstantiateBird(selected);
     }
 
-    // ── Spawn from queue (dequeues) ───────────────
     void SpawnBird()
     {
         if (GameManager.Instance == null ||
@@ -170,7 +180,6 @@ public class Slingshot : MonoBehaviour
             trajectoryLine.positionCount = 0;
     }
 
-    // ── Shared bird instantiation ─────────────────
     void InstantiateBird(GameObject prefab)
     {
         _bird           = Instantiate(prefab, launchPoint.position, Quaternion.identity);
@@ -227,8 +236,7 @@ public class Slingshot : MonoBehaviour
         if (trajectoryLine != null)
             trajectoryLine.positionCount = 0;
 
-        // Cache everything before nulling references
-        Bird   birdComp = _bird.GetComponent<Bird>();
+        Bird   birdComp    = _bird.GetComponent<Bird>();
         string launchSound = birdComp?.birdType switch {
             BirdType.Chuck => "ChuckLaunch",
             BirdType.Bomb  => "BombLaunch",
@@ -243,7 +251,6 @@ public class Slingshot : MonoBehaviour
         gameCamera?.SetActiveBird(_bird.transform);
         AudioManager.Instance?.Play(launchSound);
 
-        // Null references — bird flies free
         _bird           = null;
         _rb             = null;
         _currentOffset  = Vector3.zero;
