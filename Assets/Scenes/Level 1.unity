@@ -435,7 +435,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 5000
   field of view: 68.37467
   orthographic: 0
   orthographic size: 5
@@ -545,8 +545,6 @@ MonoBehaviour:
   freeMoveSpeed: 10
   mouseSensitivity: 2
   transitionSpeed: 5
-  pipCamera: {fileID: 0}
-  showPip: 0
   landingLine: {fileID: 935043492}
   landingMarker: {fileID: 1852365613}
   predictionSteps: 30
@@ -1199,7 +1197,7 @@ Terrain:
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
   m_TreeMaximumFullLODCount: 50
-  m_DetailObjectDistance: 80
+  m_DetailObjectDistance: 125
   m_DetailObjectDensity: 1
   m_HeightmapPixelError: 5
   m_SplatMapDistance: 1000

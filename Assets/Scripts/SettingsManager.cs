@@ -13,7 +13,13 @@ public class SettingsManager : MonoBehaviour
     public TMP_Dropdown resolutionDropdown;
     public Toggle       fullscreenToggle;
 
-    private Resolution[] _resolutions;
+    // Fixed resolution list — only common ones
+    private readonly (int width, int height)[] _resolutions = {
+        (1280, 720),
+        (1600, 900),
+        (1920, 1080),
+        (2560, 1440)
+    };
 
     void OnEnable()
     {
@@ -25,36 +31,27 @@ public class SettingsManager : MonoBehaviour
     {
         if (resolutionDropdown == null) return;
 
-        _resolutions = Screen.resolutions;
         resolutionDropdown.ClearOptions();
 
-        var options    = new System.Collections.Generic.List<string>();
-        int currentIdx = 0;
-
-        for (int i = 0; i < _resolutions.Length; i++)
-        {
-            string option = $"{_resolutions[i].width} x {_resolutions[i].height}";
-            if (!options.Contains(option))
-                options.Add(option);
-
-            if (_resolutions[i].width  == Screen.currentResolution.width &&
-                _resolutions[i].height == Screen.currentResolution.height)
-                currentIdx = options.Count - 1;
-        }
+        var options = new System.Collections.Generic.List<string>();
+        foreach (var r in _resolutions)
+            options.Add($"{r.width} x {r.height}");
 
         resolutionDropdown.AddOptions(options);
-        resolutionDropdown.value = PlayerPrefs.GetInt("Resolution", currentIdx);
+
+        // Default to 1920x1080 (index 2) if never set
+        resolutionDropdown.value = PlayerPrefs.GetInt("Resolution", 2);
         resolutionDropdown.RefreshShownValue();
     }
 
     void LoadSettings()
     {
-        float music   = PlayerPrefs.GetFloat("MusicVolume", 0.7f);
+        // Default music = 1, sfx = 1, quality = High (2), fullscreen = true
+        float music   = PlayerPrefs.GetFloat("MusicVolume", 1f);
         float sfx     = PlayerPrefs.GetFloat("SFXVolume",   1f);
         int   quality = PlayerPrefs.GetInt("Quality",       2);
         bool  fs      = PlayerPrefs.GetInt("Fullscreen",    1) == 1;
 
-        // Set slider values — min 0, max 1
         if (musicSlider != null)
         {
             musicSlider.minValue = 0f;
@@ -69,7 +66,8 @@ public class SettingsManager : MonoBehaviour
             sfxSlider.value    = sfx;
         }
 
-        if (fullscreenToggle) fullscreenToggle.isOn = fs;
+        if (fullscreenToggle != null)
+            fullscreenToggle.isOn = fs;
 
         if (qualityDropdown != null)
         {
@@ -78,12 +76,28 @@ public class SettingsManager : MonoBehaviour
             qualityDropdown.RefreshShownValue();
         }
 
-        // Apply immediately
+        // Apply all immediately
         ApplyMusicVolume(music);
         PlayerPrefs.SetFloat("SFXVolume", sfx);
         QualitySettings.SetQualityLevel(quality);
         Screen.fullScreen = fs;
+
+        // Apply saved resolution — default 1920x1080
+        int resIdx = PlayerPrefs.GetInt("Resolution", 2);
+        resIdx = Mathf.Clamp(resIdx, 0, _resolutions.Length - 1);
+        Screen.SetResolution(_resolutions[resIdx].width,
+                             _resolutions[resIdx].height,
+                             Screen.fullScreen);
+
         PlayerPrefs.Save();
+    }
+
+    void ApplyMusicVolume(float value)
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.SetMusicVolume(value);
+        else
+            AudioListener.volume = value;
     }
 
     // ── Slider callbacks ──────────────────────────
@@ -98,16 +112,6 @@ public class SettingsManager : MonoBehaviour
     {
         PlayerPrefs.SetFloat("SFXVolume", value);
         PlayerPrefs.Save();
-    }
-
-    // Applies music volume to AudioManager if present
-    // or directly to AudioListener if not (main menu)
-    void ApplyMusicVolume(float value)
-    {
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.SetMusicVolume(value);
-        else
-            AudioListener.volume = value;
     }
 
     // ── Toggle callbacks ──────────────────────────
@@ -128,9 +132,10 @@ public class SettingsManager : MonoBehaviour
 
     public void OnResolutionChanged(int index)
     {
-        if (_resolutions == null || index >= _resolutions.Length) return;
-        Resolution r = _resolutions[index];
-        Screen.SetResolution(r.width, r.height, Screen.fullScreen);
+        if (index < 0 || index >= _resolutions.Length) return;
+        Screen.SetResolution(_resolutions[index].width,
+                             _resolutions[index].height,
+                             Screen.fullScreen);
         PlayerPrefs.SetInt("Resolution", index);
         PlayerPrefs.Save();
     }

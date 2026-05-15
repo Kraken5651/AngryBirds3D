@@ -13,7 +13,6 @@ public class CameraShake : MonoBehaviour
 
     void Awake()
     {
-        // Destroy duplicate — keeps only the first instance
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -21,7 +20,8 @@ public class CameraShake : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject); // survives scene reloads
+        // Removed DontDestroyOnLoad — CameraShake lives in the game scene
+        // and gets recreated each time the scene loads. No persistence needed.
 
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
@@ -32,7 +32,7 @@ public class CameraShake : MonoBehaviour
 
     public void Shake(float duration, float magnitude)
     {
-        if (this == null || !gameObject.activeInHierarchy) return; // safety
+        if (this == null || !gameObject.activeInHierarchy) return;
         if (_shaking) StopAllCoroutines();
         StartCoroutine(DoShake(duration, magnitude));
     }
@@ -40,10 +40,9 @@ public class CameraShake : MonoBehaviour
     IEnumerator DoShake(float duration, float magnitude)
     {
         _shaking = true;
-        if (cameraTransform != null)
-            _origin = cameraTransform.localPosition;
-
+        _origin  = cameraTransform.localPosition;
         float elapsed = 0f;
+
         while (elapsed < duration)
         {
             if (cameraTransform == null) break;
